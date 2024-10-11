@@ -895,6 +895,10 @@ def pytorch_attention_flash_attention():
             return True
     return False
 
+def pytorch_standalone_flash_attention():
+    #TODO: remove standalone FA when pytorch starts bundling it for windows
+    return args.standalone_flash_attention
+
 def force_upcast_attention_dtype():
     upcast = args.force_upcast_attention
     try:

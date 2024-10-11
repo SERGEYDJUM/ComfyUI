@@ -103,6 +103,8 @@ attn_group.add_argument("--use-split-cross-attention", action="store_true", help
 attn_group.add_argument("--use-quad-cross-attention", action="store_true", help="Use the sub-quadratic cross attention optimization . Ignored when xformers is used.")
 attn_group.add_argument("--use-pytorch-cross-attention", action="store_true", help="Use the new pytorch 2.0 cross attention function.")
 
+parser.add_argument("--standalone-flash-attention", action="store_true", help="Use Flash Attention installed separately if possible.")
+
 parser.add_argument("--disable-xformers", action="store_true", help="Disable xformers.")
 
 upcast = parser.add_mutually_exclusive_group()

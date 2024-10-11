@@ -15,6 +15,9 @@ if model_management.xformers_enabled():
     import xformers
     import xformers.ops
 
+if model_management.pytorch_standalone_flash_attention():
+    from flash_attn import flash_attn_func
+
 from comfy.cli_args import args
 import comfy.ops
 ops = comfy.ops.disable_weight_init
@@ -410,6 +413,18 @@ def attention_pytorch(q, k, v, heads, mask=None, attn_precision=None, skip_resha
     )
     return out
 
+def attention_flash(q, k, v, heads, mask=None, attn_precision=None, skip_reshape=False):
+    if skip_reshape:
+        batch, _, _, head = q.shape
+    else:
+        batch, _, head = q.shape
+        head //= heads
+        q, k, v = map(lambda t: t.view(batch, -1, heads, head), (q, k, v))
+
+    return flash_attn_func(q, k, v, dropout_p=0.0, causal=False).reshape(
+        batch, -1, heads * head
+    )
+
 
 optimized_attention = attention_basic
 
@@ -428,6 +443,13 @@ else:
         optimized_attention = attention_sub_quad
 
 optimized_attention_masked = optimized_attention
+
+if model_management.pytorch_standalone_flash_attention():
+    if FORCE_UPCAST_ATTENTION_DTYPE is None:
+        logging.info("Using Flash Attention for attention without mask")
+        optimized_attention = attention_flash
+    else:
+        logging.warning("Can't use Flash Attention with --force-upcast-attention")
 
 def optimized_attention_for_device(device, mask=False, small_input=False):
     if small_input:
